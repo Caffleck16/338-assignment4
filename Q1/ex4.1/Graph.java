@@ -1,120 +1,87 @@
-package Q1;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class Graph {
-    private Map<String, GraphNode> nodes;
+    static class GraphNode {
+        private String data;
+        private int id;
 
-    public Graph() {
-        nodes = new HashMap<>();
+        GraphNode(String data, int id) {
+            this.data = data;
+            this.id = id;
+        }
+        public int getId() {
+            return this.id;
+        }
+        public String getData() {
+            return this.data;
+        }
     }
+    static class Edge {
+        private GraphNode node1;
+        private GraphNode node2;
+        private int weight;
 
+        Edge(GraphNode node1, GraphNode node2, int weight) {
+            this.node1 = node1;
+            this.node2 = node2;
+            this.weight = weight;
+        }
+        public GraphNode getHome() {
+            return this.node1;
+        }
+        public GraphNode getDest() {
+            return this.node2;
+        }
+        public int getWeight() {
+            return this.weight;
+        }
+    }
+    private int V = 1;
+    private Map<GraphNode, LinkedList<Edge>> adjList = new HashMap<GraphNode, LinkedList<Edge>>();
+
+    // Method a)
     public GraphNode addNode(String data) {
-        GraphNode node = new GraphNode(data);
-        nodes.put(data, node);
+        GraphNode node = new GraphNode(data, this.V);
+        this.adjList.put(node, null);
+        this.V++;
         return node;
     }
-
+    // Method b)
     public void removeNode(GraphNode node) {
-        nodes.remove(node.getData());
-        for (GraphNode neighbor : node.getNeighbors()) {
-            neighbor.removeNeighbor(node);
-        }
+        this.adjList.remove(node);
+        this.V--;
     }
-
+    // Method c)
     public void addEdge(GraphNode n1, GraphNode n2, int weight) {
-        n1.addNeighbor(n2, weight);
-        n2.addNeighbor(n1, weight);
+        Edge e = new Edge(n1, n2, weight);
+        Edge r = new Edge(n2, n1, weight);
+        LinkedList<Edge> temp1 = adjList.get(n1);
+        LinkedList<Edge> temp2 = adjList.get(n2);
+        temp1.add(e);
+        temp2.add(r);
+        this.adjList.put(n1, temp1);
+        this.adjList.put(n2, temp2);
     }
-
+    // Method d)
     public void removeEdge(GraphNode n1, GraphNode n2) {
-        n1.removeNeighbor(n2);
-        n2.removeNeighbor(n1);
-    }
-
-    public static Graph importFromFile(String fileName) {
-        Graph graph = new Graph();
-        
-        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-            String line = reader.readLine();
-            if (line == null || !line.equals("strict graph G {")) {
-                return null;
+        LinkedList<Edge> temp1 = this.adjList.get(n1);
+        for (Edge edge : temp1) {
+            if (edge.getDest() == n2) {
+                temp1.remove(edge);
             }
-            
-            while ((line = reader.readLine()) != null) {
-                if (line.equals("}")) {
-                    return graph;
-                }
-                
-                String[] parts = line.split("--");
-                if (parts.length != 2) {
-                    return null;
-                }
-                
-                String n1Data = parts[0].trim();
-                String n2Data = parts[1].trim();
-                
-                int weight = 1;
-                int weightIndex = line.indexOf("weight=");
-                if (weightIndex != -1) {
-                    int endWeightIndex = line.indexOf(';', weightIndex);
-                    String weightString = line.substring(weightIndex + 7, endWeightIndex).trim();
-                    try {
-                        weight = Integer.parseInt(weightString);
-                    } catch (NumberFormatException e) {
-                        return null;
-                    }
-                }
-                
-                GraphNode n1 = graph.addNode(n1Data);
-                GraphNode n2 = graph.addNode(n2Data);
-                graph.addEdge(n1, n2, weight);
+        }
+        this.adjList.put(n1, temp1);
+        LinkedList<Edge> temp2 = this.adjList.get(n2);
+        for (Edge edge : temp2) {
+            if (edge.getDest() == n1) {
+                temp2.remove(edge);
             }
-            
-            return null;
-        } catch (IOException e) {
-            return null;
         }
+        adjList.put(n2, temp2);
     }
-    
+
+    public int getNumVertices() {
+        return V;
+    }
+
 }
-
-class GraphNode {
-    private String data;
-    private Map<GraphNode, Integer> neighbors;
-
-    public GraphNode(String data) {
-        this.data = data;
-        neighbors = new HashMap<>();
-    }
-
-    public String getData() {
-        return data;
-    }
-
-    public void addNeighbor(GraphNode neighbor, int weight) {
-        neighbors.put(neighbor, weight);
-    }
-
-    public void removeNeighbor(GraphNode neighbor) {
-        neighbors.remove(neighbor);
-    }
-
-    public Set<GraphNode> getNeighbors() {
-        return neighbors.keySet();
-    }
-
-    public int getWeight(GraphNode neighbor) {
-        Integer weight = neighbors.get(neighbor);
-        if (weight == null) {
-            return 1; // default weight is 1
-        }
-        return weight;
-    }
-}
-
