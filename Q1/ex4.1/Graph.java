@@ -1,16 +1,14 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 public class Graph {
     static class GraphNode {
         private String data;
-        private int id;
 
-        GraphNode(String data, int id) {
+        GraphNode(String data) {
             this.data = data;
-            this.id = id;
-        }
-        public int getId() {
-            return this.id;
         }
         public String getData() {
             return this.data;
@@ -36,20 +34,17 @@ public class Graph {
             return this.weight;
         }
     }
-    private int V = 1;
     private Map<GraphNode, LinkedList<Edge>> adjList = new HashMap<GraphNode, LinkedList<Edge>>();
 
     // Method a)
     public GraphNode addNode(String data) {
-        GraphNode node = new GraphNode(data, this.V);
+        GraphNode node = new GraphNode(data);
         this.adjList.put(node, null);
-        this.V++;
         return node;
     }
     // Method b)
     public void removeNode(GraphNode node) {
         this.adjList.remove(node);
-        this.V--;
     }
     // Method c)
     public void addEdge(GraphNode n1, GraphNode n2, int weight) {
@@ -79,9 +74,56 @@ public class Graph {
         }
         adjList.put(n2, temp2);
     }
+    // Method e)
+    public static Graph importFromFile(String file) throws IOException {
+        Graph t = new Graph();
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        LinkedList<GraphNode> nodeList;
+        String line = reader.readLine();
+        if (!line.contains("strict")) {
+            System.out.println("Graph is not undirected");
+            reader.close();
+            return null;
+        }
+        while (!(line.contains("}"))) {
+            line = reader.readLine();
+            String homeNode = "";
+            String destNode = "";
+            String weightString = "";
+            int weight = 0;
+            if (line.contains("node")) {
 
-    public int getNumVertices() {
-        return V;
-    }
+               if (line.contains("weight")) {
+
+                int dashIndex = line.indexOf("--");
+                homeNode = line.substring(0, dashIndex).trim();
+                
+                int bracketIndex = line.indexOf("[");
+                destNode = line.substring(dashIndex + 2, bracketIndex).trim();
+
+                int weightIndex = line.indexOf("weight=");
+                weightString = line.substring(weightIndex + 7, line.length() - 2);
+                weight = Integer.parseInt(weightString);
+
+               } else {
+
+                int dashIndex = line.indexOf("--");
+                homeNode = line.substring(0, dashIndex).trim();
+                
+                int semiIndex = line.indexOf(";");
+                destNode = line.substring(dashIndex + 2, semiIndex).trim();
+
+                weight = 1;
+               }
+               GraphNode n1 = new GraphNode(homeNode);
+               GraphNode n2 = new GraphNode(destNode);
+               t.addEdge(n1, n2, weight);
+            }
+            
+        } 
+        reader.close();
+
+        return null;
+    } 
 
 }
